@@ -8,7 +8,7 @@ export class ResidentsService {
   async getCityData(cityFilter?: string): Promise<any> {
     console.log(cityFilter);
     const cityCondition = cityFilter ? `WHERE c.name LIKE $1` : '';
-    const cityParam = cityFilter ? `%${cityFilter}%` : '';
+    const cityParam = cityFilter ? [`%${cityFilter}%`] : '';
 
     const citiesPopulationQuery = `
       SELECT c.name AS city, COUNT(r.id) as count 
