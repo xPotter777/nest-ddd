@@ -3,7 +3,7 @@ import { CityRepositoryImplementation } from './infrastructure/city.repository.i
 import { CityRepository } from './domain/city.repository';
 
 @Injectable()
-export class ResidentsService {
+export class CitiesService {
   constructor(
     private cityRepositoryImplementation: CityRepositoryImplementation,
     private cityRepository: CityRepository,

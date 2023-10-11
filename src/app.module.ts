@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import appConfig from './config/app.config';
-import { ResidentsModule } from './residents/residents.module';
+import { CitiesModule } from './cities/cities.module';
 import { DatabaseModule } from './database/database.module';
 import { LoggingModule } from './logging/logging.module';
 
@@ -11,7 +11,7 @@ import { LoggingModule } from './logging/logging.module';
       load: [appConfig],
       isGlobal: true,
     }),
-    ResidentsModule,
+    CitiesModule,
     DatabaseModule,
     LoggingModule,
   ],
