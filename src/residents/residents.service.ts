@@ -18,11 +18,6 @@ export class ResidentsService {
       GROUP BY c.name 
       ORDER BY count DESC`;
 
-    const citiesPopulation = await this.databaseService.query(
-      citiesPopulationQuery,
-      cityFilter ? [cityParam] : [],
-    );
-
     const cityMembersQuery = `
     SELECT 
       c.name AS city, 
@@ -34,14 +29,16 @@ export class ResidentsService {
     GROUP BY c.name, r.first_name
     ORDER BY c.name, count DESC`;
 
-    let cityMembers;
-    if (cityFilter) {
-      cityMembers = await this.databaseService.query(cityMembersQuery, [
-        cityParam,
-      ]);
-    } else {
-      cityMembers = await this.databaseService.query(cityMembersQuery);
-    }
+    const [citiesPopulation, cityMembers] = await Promise.all([
+      this.databaseService.query(
+        citiesPopulationQuery,
+        cityFilter ? [cityParam] : [],
+      ),
+      this.databaseService.query(
+        cityMembersQuery,
+        cityFilter ? [cityParam] : [],
+      ),
+    ]);
 
     const organizedCityMembers = cityMembers.rows.reduce((acc, row) => {
       acc[row.city] = acc[row.city] || [];
@@ -52,7 +49,7 @@ export class ResidentsService {
       return acc;
     }, {});
 
-    const cityMembersArray = Object.keys(organizedCityMembers).map(city => ({
+    const cityMembersArray = Object.keys(organizedCityMembers).map((city) => ({
       city,
       members: organizedCityMembers[city],
     }));
