@@ -1,62 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
+import { CityRepositoryImplementation } from './infrastructure/city.repository.impl';
+import { CityRepository } from './domain/city.repository';
 
 @Injectable()
 export class ResidentsService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(
+    private cityRepositoryImplementation: CityRepositoryImplementation,
+    private cityRepository: CityRepository,
+  ) {}
 
   async getCityData(cityFilter?: string): Promise<any> {
-    console.log(cityFilter);
-    const cityCondition = cityFilter ? `WHERE c.name LIKE $1` : '';
-    const cityParam = cityFilter ? [`%${cityFilter}%`] : '';
+    const cities = await this.cityRepository.findCities(cityFilter);
+    const residents = await this.cityRepository.findResidents(cityFilter);
 
-    const citiesPopulationQuery = `
-      SELECT c.name AS city, COUNT(r.id) as count 
-      FROM cities c 
-      LEFT JOIN residents r ON c.id = r.city_id 
-      ${cityCondition}
-      GROUP BY c.name 
-      ORDER BY count DESC`;
+    const citiesPopulation = cities.map((city) => {
+      const cityResidents = residents.filter(
+        (resident) => resident.city.name === city.name,
+      );
+      return {
+        city: city.name,
+        count:
+          this.cityRepositoryImplementation.getCityPopulation(cityResidents),
+      };
+    });
 
-    const cityMembersQuery = `
-    SELECT 
-      c.name AS city, 
-      r.first_name,
-      COUNT(r.id) AS count 
-    FROM residents r
-    JOIN cities c ON c.id = r.city_id
-    ${cityCondition}
-    GROUP BY c.name, r.first_name
-    ORDER BY c.name, count DESC`;
-
-    const [citiesPopulation, cityMembers] = await Promise.all([
-      this.databaseService.query(
-        citiesPopulationQuery,
-        cityFilter ? [cityParam] : [],
-      ),
-      this.databaseService.query(
-        cityMembersQuery,
-        cityFilter ? [cityParam] : [],
-      ),
-    ]);
-
-    const organizedCityMembers = cityMembers.rows.reduce((acc, row) => {
-      acc[row.city] = acc[row.city] || [];
-      acc[row.city].push({
-        first_name: row.first_name,
-        count: row.count,
-      });
-      return acc;
-    }, {});
-
-    const cityMembersArray = Object.keys(organizedCityMembers).map((city) => ({
-      city,
-      members: organizedCityMembers[city],
-    }));
+    const cityMembers = cities.map((city) => {
+      const cityResidents = residents.filter(
+        (resident) => resident.city.name === city.name,
+      );
+      return {
+        city: city.name,
+        members: this.cityRepositoryImplementation
+          .getCityMembers(cityResidents)
+          .map((resident) => {
+            return {
+              first_name: resident.firstName,
+            };
+          }),
+      };
+    });
 
     return {
-      cities_population: citiesPopulation.rows,
-      city_members: cityMembersArray,
+      cities_population: citiesPopulation,
+      city_members: cityMembers,
     };
   }
 }
