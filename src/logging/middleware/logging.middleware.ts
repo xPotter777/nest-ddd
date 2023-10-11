@@ -24,10 +24,9 @@ export class LoggingMiddleware implements NestMiddleware {
         },
         duration,
       };
-      console.log('log', logData);
       axios
         .post('http://localhost:8765/logging', logData)
-        .catch((err) => console.error('Logging service error:'));
+        .catch((err) => console.error('Logging service error:',err));
     });
   }
 }
